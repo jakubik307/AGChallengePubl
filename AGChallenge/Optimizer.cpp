@@ -1,50 +1,50 @@
 #include "Optimizer.h"
 
-#include <cfloat>
-#include <iostream>
-#include <windows.h>
-
-using namespace std;
-
-COptimizer::COptimizer(CLFLnetEvaluator &cEvaluator)
+COptimizer::COptimizer(CLFLnetEvaluator& cEvaluator)
 	: c_evaluator(cEvaluator)
 {
 	random_device c_seed_generator;
 	c_rand_engine.seed(c_seed_generator());
 
 	d_current_best_fitness = 0;
+
+	//population.resize((size_t)POP_SIZE);
 }//COptimizer::COptimizer(CEvaluator &cEvaluator)
 
 void COptimizer::vInitialize()
 {
 	d_current_best_fitness = -DBL_MAX;
 	v_current_best.clear();
+
+	for (int i = 0; i < POP_SIZE; i++)
+	{
+		population.push_back(Individual(c_evaluator, c_rand_engine));
+		population.at(i).fill_randomly();
+	}
 }//void COptimizer::vInitialize()
 
 void COptimizer::vRunIteration()
 {
-	vector<int> v_candidate;
-	v_fill_randomly(v_candidate);
-
-	double d_candidate_fitness = c_evaluator.dEvaluate(&v_candidate);
-
-	if (d_candidate_fitness > d_current_best_fitness)
+	for (int i = 0; i < population.size(); i++)
 	{
-		v_current_best = v_candidate;
-		d_current_best_fitness = d_candidate_fitness;
+		if (population.at(i).getFitness() > d_current_best_fitness)
+		{
+			v_current_best = population.at(i).genotype;
+			d_current_best_fitness = population.at(i).getFitness();
 
-		cout << d_current_best_fitness << endl;
-	}//if (d_candidate_fitness > d_current_best_fitness)
-}//void COptimizer::vRunIteration()
+			cout << d_current_best_fitness << endl;
+		}
+	}
 
 
+}
 
-void COptimizer::v_fill_randomly(vector<int> &vSolution)
+void COptimizer::vRunAlgorithm()
 {
-	vSolution.resize((size_t)c_evaluator.iGetNumberOfBits());
+	int current_iteration = 0;
 
-	for (int ii = 0; ii < vSolution.size(); ii++)
+	while (current_iteration++ < ITERATIONS)
 	{
-		vSolution.at(ii) = lRand(c_evaluator.iGetNumberOfValues(ii));
-	}//for (size_t i = 0; i < vSolution.size(); i++)
-}//void COptimizer::v_fill_randomly(const vector<int> &vSolution)
+		vRunIteration();
+	}
+}
