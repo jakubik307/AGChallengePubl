@@ -156,6 +156,7 @@
   <ItemGroup>
     <ClInclude Include="Evaluator.h" />
     <ClInclude Include="fitness.h" />
+    <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="list.h" />
     <ClInclude Include="MyMath.h" />
     <ClInclude Include="NETsimulator.h" />

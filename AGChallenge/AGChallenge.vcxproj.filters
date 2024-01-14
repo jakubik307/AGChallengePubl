@@ -71,5 +71,8 @@
     <ClInclude Include="fitness.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SmartPointer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

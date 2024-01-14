@@ -12,9 +12,9 @@ using namespace std;
 
 const int ITERATIONS = 10000;
 
-const int POP_SIZE = 20;
-const double CROSS_PROB = 0.1;
-const double MUT_PROB = 0.005;
+const int POP_SIZE = 100;
+const double CROSS_PROB = 0.6;
+const double MUT_PROB = 0.0001;
 
 class Individual
 {
@@ -22,6 +22,9 @@ class Individual
 
 public:
 	Individual(CLFLnetEvaluator& evaluator, mt19937& rand_engine);
+	Individual(const Individual& other);
+	
+	Individual& operator=(const Individual& other);
 
 	double getFitness();
 	void mutate();
@@ -51,11 +54,12 @@ public:
 
 private:
 	CLFLnetEvaluator& c_evaluator;
+	mt19937 c_rand_engine;
 
 	double d_current_best_fitness;
 	vector<int> v_current_best;
 
-	mt19937 c_rand_engine;
-
 	vector<Individual> population;
+
+	Individual tournament();
 };//class COptimizer
