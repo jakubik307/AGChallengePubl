@@ -23,11 +23,12 @@ class Individual
 public:
 	Individual(CLFLnetEvaluator& evaluator, mt19937& rand_engine);
 	Individual(const Individual& other);
-	
+
 	Individual& operator=(const Individual& other);
 
 	double getFitness();
 	void mutate();
+	vector<Individual> modification_mutate();
 	void crossover(Individual& other_parent, Individual& child1, Individual& child2);
 
 private:

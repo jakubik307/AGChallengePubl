@@ -74,6 +74,35 @@ void Individual::mutate()
 	}
 }
 
+vector<Individual> Individual::modification_mutate()
+{
+	uniform_int_distribution<int> gene_distribution(0, evaluator.iGetNumberOfBits() - 1);
+	vector<Individual> mutated_inviduals;
+
+	int position = gene_distribution(rand_engine);
+	int posibilities = evaluator.iGetNumberOfValues(position);
+	int current_gene = genotype.at(position);
+
+	for (int i = 0; i < posibilities; i++)
+	{
+		if (i != current_gene)
+		{
+			Individual new_individual = Individual(*this);
+			new_individual.genotype.at(i) = i;
+			mutated_inviduals.push_back(move(new_individual));
+		}
+	}
+
+	if (mutated_inviduals.empty())
+	{
+		mutated_inviduals.push_back(*this);
+	} 
+
+	return mutated_inviduals;
+}
+
+
+
 void Individual::crossover(Individual& other_parent, Individual& child1, Individual& child2)
 {
 	uniform_real_distribution<double> prob_distribution(0.0, 1.0);

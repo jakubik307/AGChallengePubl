@@ -43,13 +43,24 @@ void COptimizer::vRunIteration()
 		Individual child2(c_evaluator, c_rand_engine);
 		parent1.crossover(parent2, child1, child2);
 
-		// Perform mutation on children
-		child1.mutate();
-		child2.mutate();
+		uniform_real_distribution<double> mutation_distibution(0.0, 1.0);
+		double mutation_prob;
 
-		// Add children to the new population
-		new_population.push_back(move(child1));
-		new_population.push_back(move(child2));
+		mutation_prob = mutation_distibution(c_rand_engine);
+		if (mutation_prob < MUT_PROB) {
+			vector<Individual> child1_mutation = child1.modification_mutate();
+			for (int i = 0; i < child1_mutation.size(); i++) {
+				new_population.push_back(child1_mutation.at(i));
+			}
+		}
+		
+		mutation_prob = mutation_distibution(c_rand_engine);
+		if (mutation_prob < MUT_PROB) {
+			vector<Individual> child2_mutation = child2.modification_mutate();
+			for (int i = 0; i < child2_mutation.size(); i++) {
+				new_population.push_back(child2_mutation.at(i));
+			}
+		}
 	}
 
 	// Use move semantics to transfer ownership of the new population
