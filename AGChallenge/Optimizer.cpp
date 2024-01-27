@@ -83,6 +83,23 @@ void COptimizer::vRunIteration()
 	}
 }
 
+Individual* COptimizer::get_best_individual()
+{
+	Individual* best_individual;
+
+	for (int i = 0; i < population.size(); i++)
+	{
+		if (population.at(i)->getFitness() > d_current_best_fitness)
+		{
+			best_individual = population.at(i);
+			v_current_best = best_individual->genotype;
+			d_current_best_fitness = best_individual->getFitness();
+		}
+	}
+
+	return best_individual;
+}
+
 Individual* COptimizer::tournament()
 {
 	uniform_int_distribution<int> parent_distribution(0, population.size() - 1);
@@ -167,9 +184,52 @@ vector<bool> COptimizer::createScraps(Individual* individual1, Individual* indiv
 
 void COptimizer::LOaFuN()
 {
-	Individual* newIndividual1 = new Individual(c_evaluator, c_rand_engine);
-	newIndividual1->fillRandomly();
-	newIndividual1->generateRandomOrder();
-	simpleGreedyOptimalization(newIndividual1, newIndividual1->order);
-	population.push_back(newIndividual1);
+	Individual* new_individual = new Individual(c_evaluator, c_rand_engine);
+	new_individual->fillRandomly();
+	new_individual->generateRandomOrder();
+	simpleGreedyOptimalization(new_individual, new_individual->order);
+	population.push_back(new_individual);
+	Individual* old_best = get_best_individual();
+
+	if (population.size() == 1) {
+		Individual* new_individual2 = new Individual(c_evaluator, c_rand_engine);
+		new_individual2->fillRandomly();
+		new_individual2->generateRandomOrder();
+		simpleGreedyOptimalization(new_individual2, new_individual2->order);
+
+		vector<vector<bool> > linkage_scraps;
+		if (new_individual2->getFitness() < new_individual->getFitness()) {
+			linkage_scraps = linkageDiscovery(new_individual, new_individual2, new_individual->order);
+		} 
+		else {
+			linkage_scraps = linkageDiscovery(new_individual2, new_individual, new_individual2->order);
+		}
+
+
+	}
+}
+
+void COptimizer::runForLevel()
+{
+}
+
+
+vector<vector<int>> createDSM(vector<vector<bool>>& linkage_scraps)
+{
+	int genes_num = linkage_scraps[0].size();
+
+	vector<vector<int> > dsm(genes_num, vector<int>(genes_num, 0));
+
+	for (vector<bool>& linkage_scrap : linkage_scraps) {
+		for (int i = 0; i < linkage_scrap.size(); i++) {
+			for (int j = i + 1; j < linkage_scrap.size(); j++) {
+				if (linkage_scrap.at(i) && linkage_scrap.at(j)) {
+					dsm[i][j]++;
+					dsm[j][i]++;
+				}
+			}
+		}
+	}
+
+	return dsm;
 }

@@ -60,6 +60,7 @@ private:
 
 	double d_current_best_fitness;
 	vector<int> v_current_best;
+	Individual* get_best_individual();
 
 	vector<Individual*> population;
 
@@ -71,3 +72,6 @@ private:
 	void LOaFuN();
 	void runForLevel();
 };//class COptimizer
+
+//DSM
+vector<vector<int> > createDSM(vector<vector<bool> >& linkage_scraps);
