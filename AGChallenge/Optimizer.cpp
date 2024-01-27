@@ -9,7 +9,15 @@ COptimizer::COptimizer(CLFLnetEvaluator& cEvaluator)
 	d_current_best_fitness = 0;
 
 	//population.resize((size_t)POP_SIZE);
-}//COptimizer::COptimizer(CEvaluator &cEvaluator)
+}
+
+COptimizer::~COptimizer()
+{
+	for (int i = 0; i < population.size(); i++) {
+		delete population[i];
+	}
+}
+//COptimizer::COptimizer(CEvaluator &cEvaluator)
 
 void COptimizer::vInitialize()
 {
@@ -18,67 +26,84 @@ void COptimizer::vInitialize()
 
 	for (int i = 0; i < POP_SIZE; i++)
 	{
-		population.push_back(Individual(c_evaluator, c_rand_engine));
-		population.at(i).fill_randomly();
+		population.push_back(new Individual(c_evaluator, c_rand_engine));
+		population[i]->fillRandomly();
 	}
 }//void COptimizer::vInitialize()
 
 void COptimizer::vRunIteration()
 {
-	vector<Individual> new_population;
+	while (d_current_best_fitness != 1) {
+		int cache_livetime = 0;
+		vector<Individual*> new_population;
 
-	// Perform selection, crossover, mutation, and replacement
-	while (new_population.size() < POP_SIZE)
-	{
-		Individual parent1 = tournament();
-		Individual parent2 = tournament();
-
-		while (parent1.genotype == parent2.genotype)
+		// Perform selection, crossover, mutation, and replacement
+		while (new_population.size() < POP_SIZE)
 		{
-			parent2 = tournament();
+			Individual* parent1 = tournament();
+			Individual* parent2 = tournament();
+
+			while (parent1->genotype == parent2->genotype)
+			{
+				delete parent2;
+				parent2 = tournament();
+			}
+
+			// Perform crossover
+			Individual* child1 = new Individual(*parent1);
+			Individual* child2 = new Individual(*parent2);
+			parent1->crossover(parent2, child1, child2);
+
+			delete parent1;
+			delete parent2;
+
+			// Perform mutation on children
+			child1->mutate();
+			child2->mutate();
+
+			// Add children to the new population
+			new_population.push_back(child1);
+			new_population.push_back(child2);
 		}
 
-		// Perform crossover
-		Individual child1(c_evaluator, c_rand_engine);
-		Individual child2(c_evaluator, c_rand_engine);
-		parent1.crossover(parent2, child1, child2);
-
-		// Perform mutation on children
-		child1.mutate();
-		child2.mutate();
-
-		// Add children to the new population
-		new_population.push_back(move(child1));
-		new_population.push_back(move(child2));
-	}
-
-	// Use move semantics to transfer ownership of the new population
-	population = move(new_population);
-
-	// Update the current best solution
-	for (int i = 0; i < population.size(); i++)
-	{
-		if (population.at(i).getFitness() > d_current_best_fitness)
-		{
-			v_current_best = population.at(i).genotype;
-			d_current_best_fitness = population.at(i).getFitness();
-
-			cout << d_current_best_fitness << endl;
+		// Swap new population with the current one
+		for (int i = 0; i < population.size(); i++) {
+			delete population[i];
 		}
+		population.swap(new_population);
+
+		// Set size to the constant value
+		while (population.size() > POP_SIZE) {
+			delete population[population.size() - 1];
+			population.pop_back();
+		}
+
+		// Update the current best solution
+		for (int i = 0; i < population.size(); i++)
+		{
+			double fitness = population[i]->updateFitness(*this);
+		}
+
+		shuffle(begin(population), end(population), c_rand_engine);
+
+		// Optimize some solutions
+		for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
+			simpleGreedyOptimization(population[i]);
+		}
+
+		//Clear cache
+		if (cache_livetime == CACHE_MAX_LIVETIME) {
+			cache_livetime = 0;
+			fitnessCache.clear();
+		}
+
+		cout << "END OF ITERATION: " << d_current_best_fitness << endl;
 	}
+	fitnessCache.clear();
 }
 
-void COptimizer::vRunAlgorithm()
-{
-	int current_iteration = 0;
 
-	while (current_iteration++ < ITERATIONS)
-	{
-		vRunIteration();
-	}
-}
-
-Individual COptimizer::tournament()
+Individual* COptimizer::tournament()
 {
 	uniform_int_distribution<int> parent_distribution(0, population.size() - 1);
 
@@ -91,15 +116,48 @@ Individual COptimizer::tournament()
 		parent2_index = parent_distribution(c_rand_engine);
 	}
 
-	double parent1_fitness = population.at(parent1_index).getFitness();
-	double parent2_fitness = population.at(parent2_index).getFitness();
+	double parent1_fitness = population[parent1_index]->updateFitness(*this);
+	double parent2_fitness = population[parent2_index]->updateFitness(*this);
 
 	if (parent1_fitness > parent2_fitness)
 	{
-		return population.at(parent1_index);
+		return new Individual(*population[parent1_index]);
 	}
 	else
 	{
-		return population.at(parent2_index);
+		return new Individual(*population[parent2_index]);
 	}
+}
+
+void COptimizer::simpleGreedyOptimization(Individual* individual) {
+	bool at_least_one_optimized = true;
+
+	while (at_least_one_optimized) {
+		at_least_one_optimized = false;
+
+		for (int gene_offset : generateRandomOrder()) {
+			int available_gene_values = c_evaluator.iGetNumberOfValues(gene_offset);
+			double best_fitness = individual->updateFitness(*this);
+			int best_fitness_gene_value = individual->genotype[gene_offset];
+			for (int i = 0; i < available_gene_values; i++) {
+				individual->genotype[gene_offset] = i;
+				double current_fitness = individual->updateFitness(*this);
+				if (current_fitness > best_fitness) {
+					best_fitness_gene_value = i;
+					at_least_one_optimized = true;
+				}
+			}
+			individual->genotype[gene_offset] = best_fitness_gene_value;
+		}
+	}
+}
+
+vector<int> COptimizer::generateRandomOrder()
+{
+	vector<int> order;
+	for (int i = 0; i < c_evaluator.iGetNumberOfBits(); i++) {
+		order.push_back(i);
+	}
+	shuffle(begin(order), end(order), c_rand_engine);
+	return order;
 }

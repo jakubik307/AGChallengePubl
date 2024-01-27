@@ -5,16 +5,30 @@
 #include <random>
 #include <vector>
 #include <cfloat>
+#include <unordered_map>
 #include <iostream>
 #include <windows.h>
+#include <algorithm>
 
 using namespace std;
-
-const int ITERATIONS = 10000;
 
 const int POP_SIZE = 100;
 const double CROSS_PROB = 0.6;
 const double MUT_PROB = 0.0001;
+const int GREEDY_INDIVIDUALS = 10;
+const int CACHE_MAX_LIVETIME = 3;
+
+template <>
+struct hash<std::vector<int>> {
+	size_t operator()(const std::vector<int>& vec) const {
+		size_t hash = 0;
+		for (int i : vec) {
+			// Combine the hash with each element in the vector
+			hash ^= std::hash<int>{}(i)+0x9e3779b9 + (hash << 6) + (hash >> 2);
+		}
+		return hash;
+	}
+};
 
 class Individual
 {
@@ -26,15 +40,14 @@ public:
 	
 	Individual& operator=(const Individual& other);
 
-	double getFitness();
+	double updateFitness(COptimizer& optimizer);
 	void mutate();
-	void crossover(Individual& other_parent, Individual& child1, Individual& child2);
+	void crossover(Individual* other_parent, Individual* child1, Individual* child2);
 
 private:
-	void fill_randomly();
+	void fillRandomly();
 
 	double fitness;
-	bool update_fitness;
 
 	CLFLnetEvaluator& evaluator;
 	mt19937& rand_engine;
@@ -43,12 +56,14 @@ private:
 
 class COptimizer
 {
+	friend class Individual;
+
 public:
 	COptimizer(CLFLnetEvaluator& cEvaluator);
+	~COptimizer();
 
 	void vInitialize();
 	void vRunIteration();
-	void vRunAlgorithm();
 
 	vector<int>* pvGetCurrentBest() { return &v_current_best; }
 
@@ -59,7 +74,10 @@ private:
 	double d_current_best_fitness;
 	vector<int> v_current_best;
 
-	vector<Individual> population;
+	vector<Individual*> population;
+	unordered_map<vector<int>, double> fitnessCache;
 
-	Individual tournament();
+	Individual* tournament();
+	void simpleGreedyOptimization(Individual* optimized_individual);
+	vector<int> generateRandomOrder();
 };//class COptimizer

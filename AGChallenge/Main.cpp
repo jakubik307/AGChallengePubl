@@ -10,7 +10,7 @@ using namespace TimeCounters;
 
 using namespace std;
 
-#define dMAX_TIME 20 * 60
+#define dMAX_TIME 120 * 60
 
 
 void vRunExperiment(CLFLnetEvaluator &cConfiguredEvaluator)
@@ -55,11 +55,10 @@ void  vRunLFLExperiment(CString  sNetName)
 
 
 
-void main(int iArgCount, char **ppcArgValues)
+void main(int iArgCount, char **ppcArgValues) 
 {
 	random_device c_mask_seed_generator;
 	int i_mask_seed = (int)c_mask_seed_generator();
-
 
 	CString  s_test;
 	vRunLFLExperiment("104b00");
