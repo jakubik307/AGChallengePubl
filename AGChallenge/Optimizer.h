@@ -7,10 +7,9 @@
 #include <cfloat>
 #include <iostream>
 #include <windows.h>
+#include "SmartPointer.h"
 
 using namespace std;
-
-const int ITERATIONS = 10000;
 
 const int POP_SIZE = 100;
 const double CROSS_PROB = 0.6;
@@ -28,13 +27,16 @@ public:
 
 	double getFitness();
 	void mutate();
-	void crossover(Individual& other_parent, Individual& child1, Individual& child2);
+	void crossover(Individual* other_parent, Individual* child1, Individual* child2);
 
 private:
-	void fill_randomly();
+	void fillRandomly();
+	void generateRandomOrder();
 
 	double fitness;
 	bool update_fitness;
+	int level;
+	vector<int> order;
 
 	CLFLnetEvaluator& evaluator;
 	mt19937& rand_engine;
@@ -45,10 +47,10 @@ class COptimizer
 {
 public:
 	COptimizer(CLFLnetEvaluator& cEvaluator);
+	~COptimizer();
 
 	void vInitialize();
 	void vRunIteration();
-	void vRunAlgorithm();
 
 	vector<int>* pvGetCurrentBest() { return &v_current_best; }
 
@@ -59,7 +61,13 @@ private:
 	double d_current_best_fitness;
 	vector<int> v_current_best;
 
-	vector<Individual> population;
+	vector<Individual*> population;
 
-	Individual tournament();
+	Individual* tournament();
+
+	void simpleGreedyOptimalization(Individual* optimized_individual, vector<int>& order);
+	vector<vector<bool> > linkageDiscovery(Individual* base_individual, Individual* other, vector<int>& order);
+	vector<bool> createScraps(Individual* individual1, Individual* individual2);
+	void LOaFuN();
+	void runForLevel();
 };//class COptimizer

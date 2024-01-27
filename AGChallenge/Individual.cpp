@@ -8,6 +8,7 @@ Individual::Individual(CLFLnetEvaluator& evaluator, mt19937& rand_engine)
 	genotype.resize((size_t)evaluator.iGetNumberOfBits());
 
 	fitness = -1;
+	level = 1;
 	update_fitness = true;
 }
 
@@ -16,7 +17,9 @@ Individual::Individual(const Individual& other)
 	update_fitness(other.update_fitness),
 	evaluator(other.evaluator),
 	rand_engine(other.rand_engine),
-	genotype(other.genotype)
+	genotype(other.genotype),
+	level(other.level),
+	order(other.level)
 {
 }
 
@@ -29,11 +32,13 @@ Individual& Individual::operator=(const Individual& other)
 		evaluator = other.evaluator;
 		rand_engine = other.rand_engine;
 		genotype = other.genotype;
+		level = other.level;
+		order = other.order;
 	}
 	return *this;
 }
 
-void Individual::fill_randomly()
+void Individual::fillRandomly()
 {
 	update_fitness = true;
 
@@ -42,6 +47,16 @@ void Individual::fill_randomly()
 		uniform_int_distribution<int> gene_distribution(0, evaluator.iGetNumberOfValues(i) - 1);
 		genotype.at(i) = gene_distribution(rand_engine);
 	}
+}
+
+void Individual::generateRandomOrder()
+{
+	vector<int> new_order;
+	for (int i = 0; i < genotype.size(); i++) {
+		new_order.push_back(i);
+	}
+	random_shuffle(new_order.begin(), new_order.end());
+	order = new_order;
 }
 
 double Individual::getFitness()
@@ -74,7 +89,7 @@ void Individual::mutate()
 	}
 }
 
-void Individual::crossover(Individual& other_parent, Individual& child1, Individual& child2)
+void Individual::crossover(Individual* other_parent, Individual* child1, Individual* child2)
 {
 	uniform_real_distribution<double> prob_distribution(0.0, 1.0);
 	double crossover_prob = prob_distribution(rand_engine);
@@ -94,27 +109,27 @@ void Individual::crossover(Individual& other_parent, Individual& child1, Individ
 	uniform_int_distribution<int> crossover_point_distribution(1, genotype.size() - 1);
 	crossover_point = crossover_point_distribution(rand_engine);
 
-	child1.genotype.clear();
-	child1.genotype.resize((size_t)evaluator.iGetNumberOfBits());
-	child1.update_fitness = true;
+	child1->genotype.clear();
+	child1->genotype.resize((size_t)evaluator.iGetNumberOfBits());
+	child1->update_fitness = true;
 
-	child2.genotype.clear();
-	child2.genotype.resize((size_t)evaluator.iGetNumberOfBits());
-	child2.update_fitness = true;
+	child2->genotype.clear();
+	child2->genotype.resize((size_t)evaluator.iGetNumberOfBits());
+	child2->update_fitness = true;
 
 	// Perform crossover for child 1
 	for (int i = 0; i < crossover_point; i++) {
-		child1.genotype[i] = genotype[i];
+		child1->genotype[i] = genotype[i];
 	}
 	for (int i = crossover_point; i < genotype.size(); i++) {
-		child1.genotype[i] = other_parent.genotype[i];
+		child1->genotype[i] = other_parent->genotype[i];
 	}
 
 	// Perform crossover for child 2
 	for (int i = 0; i < crossover_point; i++) {
-		child2.genotype[i] = other_parent.genotype[i];
+		child2->genotype[i] = other_parent->genotype[i];
 	}
 	for (int i = crossover_point; i < genotype.size(); i++) {
-		child2.genotype[i] = genotype[i];
+		child2->genotype[i] = genotype[i];
 	}
 }
