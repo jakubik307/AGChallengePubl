@@ -63,14 +63,15 @@ private:
 	Individual* get_best_individual();
 
 	vector<Individual*> population;
-
-	Individual* tournament();
+	vector<vector<int> > linkage_set;
+	int max_level;
+	
 
 	void simpleGreedyOptimalization(Individual* optimized_individual, vector<int>& order);
 	vector<vector<bool> > linkageDiscovery(Individual* base_individual, Individual* other, vector<int>& order);
 	vector<bool> createScraps(Individual* individual1, Individual* individual2);
 	void LOaFuN();
-	void runForLevel();
+	void runForLevel(int level, Individual* new_individual);
 };//class COptimizer
 
 //DSM

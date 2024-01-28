@@ -14,7 +14,7 @@ COptimizer::COptimizer(CLFLnetEvaluator& cEvaluator)
 COptimizer::~COptimizer()
 {
 	for (int i = 0; i < population.size(); i++) {
-		delete population.at(i);
+		delete population[i];
 	}
 }
 //COptimizer::COptimizer(CEvaluator &cEvaluator)
@@ -23,64 +23,11 @@ void COptimizer::vInitialize()
 {
 	d_current_best_fitness = -DBL_MAX;
 	v_current_best.clear();
-	
-	for (int i = 0; i < POP_SIZE; i++)
-	{
-		population.push_back(new Individual(c_evaluator, c_rand_engine));
-		population.at(i)->fillRandomly();
-	}
+	max_level = 1;
 }//void COptimizer::vInitialize()
 
 void COptimizer::vRunIteration()
 {
-	vector<Individual*> new_population;
-
-	// Perform selection, crossover, mutation, and replacement
-	while (new_population.size() < POP_SIZE)
-	{
-		Individual* parent1 = tournament();
-		Individual* parent2 = tournament();
-
-		while (parent1->genotype == parent2->genotype)
-		{
-			delete parent2;
-			parent2 = tournament();
-		}
-
-		// Perform crossover
-		Individual* child1 = new Individual(c_evaluator, c_rand_engine);
-		Individual* child2 = new Individual(c_evaluator, c_rand_engine);
-		parent1->crossover(parent2, child1, child2);
-
-		delete parent1;
-		delete parent2;
-
-		// Perform mutation on children
-		child1->mutate();
-		child2->mutate();
-
-		// Add children to the new population
-		new_population.push_back(child1);
-		new_population.push_back(child2);
-	}
-
-	// Swap new population with the current one
-	for (int i = 0; i < population.size(); i++) {
-		delete population.at(i);
-	}
-	population.swap(new_population);
-
-	// Update the current best solution
-	for (int i = 0; i < population.size(); i++)
-	{
-		if (population.at(i)->getFitness() > d_current_best_fitness)
-		{
-			v_current_best = population.at(i)->genotype;
-			d_current_best_fitness = population.at(i)->getFitness();
-
-			cout << d_current_best_fitness << endl;
-		}
-	}
 }
 
 Individual* COptimizer::get_best_individual()
@@ -98,32 +45,6 @@ Individual* COptimizer::get_best_individual()
 	}
 
 	return best_individual;
-}
-
-Individual* COptimizer::tournament()
-{
-	uniform_int_distribution<int> parent_distribution(0, population.size() - 1);
-
-	int parent1_index = parent_distribution(c_rand_engine);
-	int parent2_index = parent_distribution(c_rand_engine);
-
-	// Ensure parent2 is different from parent1
-	while (parent2_index == parent1_index)
-	{
-		parent2_index = parent_distribution(c_rand_engine);
-	}
-
-	double parent1_fitness = population.at(parent1_index)->getFitness();
-	double parent2_fitness = population.at(parent2_index)->getFitness();
-
-	if (parent1_fitness > parent2_fitness)
-	{
-		return new Individual(*population.at(parent1_index));
-	}
-	else
-	{
-		return new Individual(*population.at(parent2_index));
-	}
 }
 
 void COptimizer::simpleGreedyOptimalization(Individual* optimized_individual, vector<int>& order) {
@@ -190,6 +111,7 @@ void COptimizer::LOaFuN()
 	simpleGreedyOptimalization(new_individual, new_individual->order);
 	population.push_back(new_individual);
 	Individual* old_best = get_best_individual();
+	vector<vector<bool> > linkage_scraps;
 
 	if (population.size() == 1) {
 		Individual* new_individual2 = new Individual(c_evaluator, c_rand_engine);
@@ -197,19 +119,26 @@ void COptimizer::LOaFuN()
 		new_individual2->generateRandomOrder();
 		simpleGreedyOptimalization(new_individual2, new_individual2->order);
 
-		vector<vector<bool> > linkage_scraps;
 		if (new_individual2->getFitness() < new_individual->getFitness()) {
 			linkage_scraps = linkageDiscovery(new_individual, new_individual2, new_individual->order);
 		} 
 		else {
 			linkage_scraps = linkageDiscovery(new_individual2, new_individual, new_individual2->order);
 		}
+		linkage_set = findMasks(createDSM(linkage_scraps, c_rand_engine), c_rand_engine);
+	}
 
-
+	for (int i = 1; i < max_level; i++) {
+		runForLevel(i, new_individual);
+	}
+	simpleGreedyOptimalization(new_individual, new_individual->order);
+	if (old_best->getFitness() < new_individual->getFitness()) {
+		linkage_scraps = linkageDiscovery(new_individual, old_best, new_individual->order);
+		linkage_set = findMasks(createDSM(linkage_scraps, c_rand_engine), c_rand_engine);
 	}
 }
 
-void COptimizer::runForLevel()
+void COptimizer::runForLevel(int level, Individual* new_individual)
 {
 }
 

@@ -19,7 +19,7 @@ Individual::Individual(const Individual& other)
 	rand_engine(other.rand_engine),
 	genotype(other.genotype),
 	level(other.level),
-	order(other.level)
+	order(other.order)
 {
 }
 
