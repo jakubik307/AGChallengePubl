@@ -29,8 +29,6 @@ void COptimizer::vInitialize()
 		population.push_back(new Individual(c_evaluator, c_rand_engine));
 		population.at(i)->fillRandomly();
 	}
-
-	test();
 }//void COptimizer::vInitialize()
 
 void COptimizer::vRunIteration()
@@ -125,47 +123,6 @@ Individual* COptimizer::tournament()
 	else
 	{
 		return new Individual(*population.at(parent2_index));
-	}
-}
-
-void COptimizer::test()
-{
-	vector<vector<bool>> linkageScraps = {
-	{true, false, false, false, false, true},
-	{false, true, false, false, true, false},
-	{false, false, true, false, true, false},
-	{false, false, false, true, false, true},
-	{false, false, false, false, true, true},
-	{false, false, false, false, false, true},
-	{true, false, false, false, false, false},
-	{false, true, false, false, false, false},
-	{true, false, true, false, false, false},
-	{false, false, true, true, false, false},
-	{true, false, false, false, true, false},
-	{true, false, false, false, false, true}
-	};
-
-	// Create DSM based on linkage scraps
-	vector<vector<double>> dsm = createDSM(linkageScraps, c_rand_engine);
-
-	// Output the resulting DSM matrix
-	cout << "DSM Matrix:" << endl;
-	for (int i = 0; i < dsm.size(); ++i) {
-		for (int j = 0; j < dsm[i].size(); ++j) {
-			cout << dsm[i][j] << " ";
-		}
-		cout << endl;
-	}
-
-	vector<vector<int> > clusters = findClusters(dsm);
-
-	cout << "Clusters:" << endl;
-	for (const auto& cluster : clusters) {
-		cout << "Cluster: ";
-		for (int gene : cluster) {
-			cout << gene << " ";
-		}
-		cout << endl;
 	}
 }
 
@@ -278,7 +235,7 @@ vector<vector<double>> createDSM(vector<vector<bool>>& linkage_scraps, mt19937& 
 
 	for (int i = 0; i < genes_num; i++) {
 		for (int j = 0; j < genes_num; j++) {
-			if (dsm[i][j] != 0) {
+			if (i != j) {
 				double randomValue = distribution(rand_engine);
 				dsm[i][j] += randomValue;
 				dsm[j][i] += randomValue;
@@ -289,29 +246,45 @@ vector<vector<double>> createDSM(vector<vector<bool>>& linkage_scraps, mt19937& 
 	return dsm;
 }
 
-vector<vector<int> > findClusters(vector<vector<double> >& dsm) {
-	int numGenes = dsm.size();
-	vector<bool> visited(numGenes, false);
-	vector<vector<int>> clusters;
+vector<vector<int>> findMasks(vector<vector<double>>& dsm, mt19937& rand_engine)
+{
+	int genes_num = dsm.size();
+	vector<vector<int> > masks;
+	vector<int> current_mask;
+	vector<int> used_genes;
 
-	for (int i = 0; i < numGenes; i++) {
-		if (!visited[i]) {
-			vector<int> cluster;
-			cluster.push_back(i);
+	uniform_int_distribution<int> distribution(0, genes_num - 1);
+	int current_gene = distribution(rand_engine);
 
-			// Depth-first search to find connected genes
-			for (int j = i + 1; j < numGenes; j++) {
-				if (dsm[i][j] > 0 || dsm[j][i] > 0) {
-					cluster.push_back(j);
-					visited[j] = true;
-				}
-			}
+	used_genes.push_back(current_gene);
+	current_mask.push_back(current_gene);
+	masks.push_back(current_mask);
 
-			if (cluster.size() > 1) {
-				clusters.push_back(cluster);
+	while (used_genes.size() != genes_num)
+	{
+		double max_value = -DBL_MAX;
+		int max_value_gene = -1;
+
+		for (int i = 0; i < genes_num; i++)
+		{
+			if (dsm[current_gene][i] > max_value && find(used_genes.begin(), used_genes.end(), i) == used_genes.end())
+			{
+				max_value = dsm[current_gene][i];
+				max_value_gene = i;
 			}
 		}
+
+		if (max_value_gene != -1)
+		{
+			current_mask.push_back(max_value_gene);
+			used_genes.push_back(max_value_gene);
+		}
+		else {
+			return masks;
+		}
+
+		masks.push_back(current_mask);
 	}
 
-	return clusters;
+	return masks;
 }

@@ -7,7 +7,7 @@
 #include <cfloat>
 #include <iostream>
 #include <windows.h>
-#include "SmartPointer.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -66,8 +66,6 @@ private:
 
 	Individual* tournament();
 
-	void test();
-
 	void simpleGreedyOptimalization(Individual* optimized_individual, vector<int>& order);
 	vector<vector<bool> > linkageDiscovery(Individual* base_individual, Individual* other, vector<int>& order);
 	vector<bool> createScraps(Individual* individual1, Individual* individual2);
@@ -77,4 +75,4 @@ private:
 
 //DSM
 vector<vector<double> > createDSM(vector<vector<bool> >& linkage_scraps, mt19937& rand_engine);
-vector<vector<int> > findClusters(vector<vector<double> >& dsm);
+vector<vector<int> > findMasks(vector<vector<double> >& dsm, mt19937& rand_engine);
