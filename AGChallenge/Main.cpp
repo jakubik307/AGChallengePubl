@@ -61,7 +61,7 @@ void main(int iArgCount, char **ppcArgValues)
 	int i_mask_seed = (int)c_mask_seed_generator();
 
 	CString  s_test;
-	vRunLFLExperiment("104b00");
+	vRunLFLExperiment("114061");
 
 	/*vRunIsingSpinGlassExperiment(81, 0, i_mask_seed);
 	vRunIsingSpinGlassExperiment(81, 0, iSEED_NO_MASK);

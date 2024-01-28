@@ -56,33 +56,24 @@ void Individual::generateRandomOrder()
 	order = new_order;
 }
 
-double Individual::updateFitness(COptimizer& optimizer)
-{
-	fitness = evaluator.dEvaluate(&genotype);
-	if (fitness > optimizer.d_current_best_fitness) {
-		optimizer.d_current_best_fitness = fitness;
-		optimizer.v_current_best = genotype;
-		cout << optimizer.d_current_best_fitness << endl;
+double Individual::updateFitness(COptimizer& optimizer) {
+	// Check if the genotype is already in the cache
+	unordered_map<vector<int>, double>::iterator cacheIt = optimizer.fitnessCache.find(genotype);
+	if (cacheIt != optimizer.fitnessCache.end()) {
+		// If found, return the cached fitness value
+		fitness = cacheIt->second;
 	}
-	return fitness;
-}
+	else {
+		// If not found, calculate the fitness and store in the cache
+		fitness = evaluator.dEvaluate(&genotype);
+		optimizer.fitnessCache[genotype] = fitness;
 
-void Individual::mutate()
-{
-	update_fitness = true;
-
-	uniform_real_distribution<double> prob_distribution(0.0, 1.0);
-
-	for (int i = 0; i < genotype.size(); ++i)
-	{
-		double mutation_prob = prob_distribution(rand_engine);
-
-		if (mutation_prob < MUT_PROB)
-		{
-			uniform_int_distribution<int> gene_distribution(0, evaluator.iGetNumberOfValues(i) - 1);
-			int mutated_value = gene_distribution(rand_engine);
-
-			genotype[i] = mutated_value;
+		if (fitness > optimizer.d_current_best_fitness) {
+			optimizer.d_current_best_fitness = fitness;
+			optimizer.v_current_best = genotype;
+			std::cout << optimizer.d_current_best_fitness << std::endl;
 		}
 	}
+
+	return fitness;
 }

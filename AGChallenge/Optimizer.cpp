@@ -32,6 +32,7 @@ void COptimizer::vRunIteration()
 		LOaFuN();
 		cout << "IMPORTANT FITNESS: " << d_current_best_fitness << endl;
 	}
+	fitnessCache.clear();
 }
 
 Individual* COptimizer::get_best_individual()
@@ -87,15 +88,14 @@ vector<vector<bool> > COptimizer::linkageDiscovery(Individual* base_individual, 
 	Individual buffer_individual(*base_individual);
 
 	for (int gene_offset : order) {
-		if (base_individual->genotype[gene_offset] != other->genotype[gene_offset]) {
-			base_individual->genotype[gene_offset] = other->genotype[gene_offset];
-			simpleGreedyOptimization(base_individual, order);
-			vector<bool> scraps = createScraps(&buffer_individual, base_individual);
-			for (bool b : scraps) {
-				cout << b << endl;
+		if (linkage_scraps.size() < MAX_LINKAGE_COLLECTED) {
+			if (base_individual->genotype[gene_offset] != other->genotype[gene_offset]) {
+				base_individual->genotype[gene_offset] = other->genotype[gene_offset];
+				simpleGreedyOptimization(base_individual, order);
+				vector<bool> scraps = createScraps(&buffer_individual, base_individual);
+				linkage_scraps.push_back(scraps);
+				base_individual = &buffer_individual;
 			}
-			linkage_scraps.push_back(scraps);
-			base_individual = &buffer_individual;
 		}
 	}
 
@@ -120,6 +120,7 @@ vector<bool> COptimizer::createScraps(Individual* individual1, Individual* indiv
 void COptimizer::LOaFuN()
 {
 	cout << "LOaFuN" << endl;
+	fitnessCache.clear();
 
 	Individual* new_individual = new Individual(c_evaluator, c_rand_engine);
 	new_individual->fillRandomly();
@@ -135,6 +136,7 @@ void COptimizer::LOaFuN()
 
 	if (population.size() == 1) {
 		cout << "individual2" << endl;
+		fitnessCache.clear();
 		Individual* new_individual2 = new Individual(c_evaluator, c_rand_engine);
 		new_individual2->fillRandomly();
 		new_individual2->generateRandomOrder();
@@ -222,7 +224,7 @@ vector<vector<double>> COptimizer::createDSM(vector<vector<bool>>& linkage_scrap
 
 	vector<vector<double> > dsm(genes_num, vector<double>(genes_num, 0));
 
-	uniform_real_distribution<double> distribution(0.0, 0.1);
+	uniform_real_distribution<double> addition_distribution(0.0, 0.1);
 
 	for (vector<bool>& linkage_scrap : linkage_scraps) {
 		for (int i = 0; i < linkage_scrap.size(); i++) {
@@ -238,7 +240,7 @@ vector<vector<double>> COptimizer::createDSM(vector<vector<bool>>& linkage_scrap
 	for (int i = 0; i < genes_num; i++) {
 		for (int j = 0; j < genes_num; j++) {
 			if (i != j) {
-				double randomValue = distribution(c_rand_engine);
+				double randomValue = addition_distribution(c_rand_engine);
 				dsm[i][j] += randomValue;
 				dsm[j][i] += randomValue;
 			}

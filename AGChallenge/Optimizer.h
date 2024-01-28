@@ -5,13 +5,26 @@
 #include <random>
 #include <vector>
 #include <cfloat>
+#include <unordered_map>
 #include <iostream>
 #include <windows.h>
 #include <algorithm>
 
 using namespace std;
 
-const double MUT_PROB = 0.0001;
+const int MAX_LINKAGE_COLLECTED = 25;
+
+template <>
+struct hash<std::vector<int>> {
+	size_t operator()(const std::vector<int>& vec) const {
+		size_t hash = 0;
+		for (int i : vec) {
+			// Combine the hash with each element in the vector
+			hash ^= std::hash<int>{}(i)+0x9e3779b9 + (hash << 6) + (hash >> 2);
+		}
+		return hash;
+	}
+};
 
 class Individual
 {
@@ -24,7 +37,6 @@ public:
 	Individual& operator=(const Individual& other);
 
 	double updateFitness(COptimizer& optimizer);
-	void mutate();
 
 private:
 	void fillRandomly();
@@ -56,6 +68,8 @@ public:
 private:
 	CLFLnetEvaluator& c_evaluator;
 	mt19937 c_rand_engine;
+
+	unordered_map<vector<int>, double> fitnessCache;
 
 	double d_current_best_fitness;
 	vector<int> v_current_best;
