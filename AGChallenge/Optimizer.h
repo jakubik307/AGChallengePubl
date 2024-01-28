@@ -11,8 +11,6 @@
 
 using namespace std;
 
-const int POP_SIZE = 100;
-const double CROSS_PROB = 0.6;
 const double MUT_PROB = 0.0001;
 
 class Individual
@@ -25,9 +23,8 @@ public:
 	
 	Individual& operator=(const Individual& other);
 
-	double getFitness();
+	double updateFitness(COptimizer& optimizer);
 	void mutate();
-	void crossover(Individual* other_parent, Individual* child1, Individual* child2);
 
 private:
 	void fillRandomly();
@@ -45,6 +42,8 @@ private:
 
 class COptimizer
 {
+	friend class Individual;
+
 public:
 	COptimizer(CLFLnetEvaluator& cEvaluator);
 	~COptimizer();
@@ -67,13 +66,15 @@ private:
 	int max_level;
 	
 
-	void simpleGreedyOptimalization(Individual* optimized_individual, vector<int>& order);
+	void simpleGreedyOptimization(Individual* optimized_individual, vector<int>& order);
 	vector<vector<bool> > linkageDiscovery(Individual* base_individual, Individual* other, vector<int>& order);
 	vector<bool> createScraps(Individual* individual1, Individual* individual2);
 	void LOaFuN();
-	void runForLevel(int level, Individual* new_individual);
+	void runForLevel(int level, Individual* individual);
+	void optimalMixing(Individual* individual, Individual* donor);
+
+	//DSM
+	vector<vector<double> > createDSM(vector<vector<bool> >& linkage_scraps);
+	vector<vector<int> > findMasks(vector<vector<double> >& dsm);
 };//class COptimizer
 
-//DSM
-vector<vector<double> > createDSM(vector<vector<bool> >& linkage_scraps, mt19937& rand_engine);
-vector<vector<int> > findMasks(vector<vector<double> >& dsm, mt19937& rand_engine);
