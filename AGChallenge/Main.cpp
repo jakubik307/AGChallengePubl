@@ -57,30 +57,8 @@ void  vRunLFLExperiment(CString  sNetName)
 
 void main(int iArgCount, char **ppcArgValues) 
 {
-	vector<vector<bool>> linkageScraps = {
-		{true, true, true, false, false},
-		{false, false, true, true, true},
-		{true, true, false, false, false},
-		{false, false, false, true, true}
-	};
-
-	// Create DSM based on linkage scraps
-	vector<vector<int>> dsm = createDSM(linkageScraps);
-
-	// Output the resulting DSM matrix
-	cout << "DSM Matrix:" << endl;
-	for (int i = 0; i < dsm.size(); ++i) {
-		for (int j = 0; j < dsm[i].size(); ++j) {
-			cout << dsm[i][j] << " ";
-		}
-		cout << endl;
-	}
-
-
-
 	random_device c_mask_seed_generator;
 	int i_mask_seed = (int)c_mask_seed_generator();
-
 
 	CString  s_test;
 	vRunLFLExperiment("104b00");
