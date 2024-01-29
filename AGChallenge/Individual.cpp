@@ -43,12 +43,13 @@ double Individual::updateFitness(COptimizer& optimizer, int eval_index) {
 	CLFLnetEvaluator* local_evaluator = optimizer.evaluators[eval_index];
 		fitness = local_evaluator->dEvaluate(&genotype);
 
+		if (fitness > optimizer.d_current_best_fitness) {
 #pragma omp critical 
-		{
-			if (fitness > optimizer.d_current_best_fitness) {
+			{
 				optimizer.d_current_best_fitness = fitness;
 				optimizer.v_current_best = genotype;
-			}
+				cout << optimizer.d_current_best_fitness << endl;
+			}	
 		}
 
 	return fitness;
