@@ -7,14 +7,13 @@ COptimizer::COptimizer(CLFLnetEvaluator& cEvaluator)
 	c_rand_engine.seed(c_seed_generator());
 
 	d_current_best_fitness = 0;
-
-	//population.resize((size_t)POP_SIZE);
 }
 
 COptimizer::~COptimizer()
 {
 	for (int i = 0; i < population.size(); i++) {
 		delete population[i];
+		delete evaluators[i];
 	}
 }
 //COptimizer::COptimizer(CEvaluator &cEvaluator)
@@ -28,6 +27,9 @@ void COptimizer::vInitialize()
 	{
 		population.push_back(new Individual(c_evaluator, c_rand_engine));
 		population[i]->fillRandomly();
+
+		evaluators.push_back(new CLFLnetEvaluator());
+		evaluators[i]->bConfigure(c_evaluator.sGetNetName());
 	}
 }//void COptimizer::vInitialize()
 
@@ -79,16 +81,17 @@ void COptimizer::vRunIteration()
 		}
 
 		// Update the current best solution
+#pragma omp parallel for
 		for (int i = 0; i < population.size(); i++)
 		{
-			double fitness = population[i]->updateFitness(*this);
+			double fitness = population[i]->updateFitness(*this, i);
 		}
 
 		shuffle(begin(population), end(population), c_rand_engine);
 
 		// Optimize some solutions
 		for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
-			simpleGreedyOptimization(population[i]);
+			simpleGreedyOptimization(population[i], i);
 		}
 
 		//Clear cache
@@ -116,8 +119,8 @@ Individual* COptimizer::tournament()
 		parent2_index = parent_distribution(c_rand_engine);
 	}
 
-	double parent1_fitness = population[parent1_index]->updateFitness(*this);
-	double parent2_fitness = population[parent2_index]->updateFitness(*this);
+	double parent1_fitness = population[parent1_index]->updateFitness(*this, 0);
+	double parent2_fitness = population[parent2_index]->updateFitness(*this, 1);
 
 	if (parent1_fitness > parent2_fitness)
 	{
@@ -129,7 +132,7 @@ Individual* COptimizer::tournament()
 	}
 }
 
-void COptimizer::simpleGreedyOptimization(Individual* individual) {
+void COptimizer::simpleGreedyOptimization(Individual* individual, int eval_index) {
 	bool at_least_one_optimized = true;
 
 	while (at_least_one_optimized) {
@@ -137,11 +140,11 @@ void COptimizer::simpleGreedyOptimization(Individual* individual) {
 
 		for (int gene_offset : generateRandomOrder()) {
 			int available_gene_values = c_evaluator.iGetNumberOfValues(gene_offset);
-			double best_fitness = individual->updateFitness(*this);
+			double best_fitness = individual->updateFitness(*this, eval_index);
 			int best_fitness_gene_value = individual->genotype[gene_offset];
 			for (int i = 0; i < available_gene_values; i++) {
 				individual->genotype[gene_offset] = i;
-				double current_fitness = individual->updateFitness(*this);
+				double current_fitness = individual->updateFitness(*this, eval_index);
 				if (current_fitness > best_fitness) {
 					best_fitness_gene_value = i;
 					at_least_one_optimized = true;

@@ -40,7 +40,7 @@ public:
 	
 	Individual& operator=(const Individual& other);
 
-	double updateFitness(COptimizer& optimizer);
+	double updateFitness(COptimizer& optimizer, int eval_index);
 	void mutate();
 	void crossover(Individual* other_parent, Individual* child1, Individual* child2);
 
@@ -74,10 +74,12 @@ private:
 	double d_current_best_fitness;
 	vector<int> v_current_best;
 
+	vector<CLFLnetEvaluator*> evaluators;
+
 	vector<Individual*> population;
 	unordered_map<vector<int>, double> fitnessCache;
 
 	Individual* tournament();
-	void simpleGreedyOptimization(Individual* optimized_individual);
+	void simpleGreedyOptimization(Individual* optimized_individual, int eval_index);
 	vector<int> generateRandomOrder();
 };//class COptimizer

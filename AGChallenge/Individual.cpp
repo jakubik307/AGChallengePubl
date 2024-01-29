@@ -39,7 +39,9 @@ void Individual::fillRandomly()
 	}
 }
 
-double Individual::updateFitness(COptimizer& optimizer) {
+double Individual::updateFitness(COptimizer& optimizer, int eval_index) {
+	CLFLnetEvaluator* local_evaluator = optimizer.evaluators[eval_index];
+
 	// Check if the genotype is already in the cache
 	unordered_map<vector<int>, double>::iterator cacheIt = optimizer.fitnessCache.find(genotype);
 	if (cacheIt != optimizer.fitnessCache.end()) {
@@ -48,7 +50,7 @@ double Individual::updateFitness(COptimizer& optimizer) {
 	}
 	else {
 		// If not found, calculate the fitness and store in the cache
-		fitness = evaluator.dEvaluate(&genotype);
+		fitness = local_evaluator->dEvaluate(&genotype);
 		optimizer.fitnessCache[genotype] = fitness;
 
 		if (fitness > optimizer.d_current_best_fitness) {
