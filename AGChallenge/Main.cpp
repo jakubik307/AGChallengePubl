@@ -10,7 +10,7 @@ using namespace TimeCounters;
 
 using namespace std;
 
-#define dMAX_TIME 8 * 60
+#define dMAX_TIME 20 * 60
 
 
 void vRunExperiment(CLFLnetEvaluator &cConfiguredEvaluator)

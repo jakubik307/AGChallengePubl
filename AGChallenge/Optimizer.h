@@ -5,30 +5,17 @@
 #include <random>
 #include <vector>
 #include <cfloat>
-#include <unordered_map>
 #include <iostream>
 #include <windows.h>
 #include <algorithm>
 
 using namespace std;
 
-const int POP_SIZE = 100;
-const double CROSS_PROB = 0.6;
+const int POP_SIZE = 200;
+const double CROSS_PROB = 0.7;
 const double MUT_PROB = 0.0001;
 const int GREEDY_INDIVIDUALS = 10;
-const int CACHE_MAX_LIVETIME = 3;
-
-template <>
-struct hash<std::vector<int>> {
-	size_t operator()(const std::vector<int>& vec) const {
-		size_t hash = 0;
-		for (int i : vec) {
-			// Combine the hash with each element in the vector
-			hash ^= std::hash<int>{}(i)+0x9e3779b9 + (hash << 6) + (hash >> 2);
-		}
-		return hash;
-	}
-};
+const int GREEDY_OPTIMIZATION = 3000;
 
 class Individual
 {
@@ -77,7 +64,6 @@ private:
 	vector<CLFLnetEvaluator*> evaluators;
 
 	vector<Individual*> population;
-	unordered_map<vector<int>, double> fitnessCache;
 
 	Individual* tournament();
 	void simpleGreedyOptimization(Individual* optimized_individual, int eval_index);

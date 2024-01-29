@@ -35,8 +35,9 @@ void COptimizer::vInitialize()
 
 void COptimizer::vRunIteration()
 {
+	int greedy_iteration = 0;
+
 	while (d_current_best_fitness != 1) {
-		int cache_livetime = 0;
 		vector<Individual*> new_population;
 
 		// Perform selection, crossover, mutation, and replacement
@@ -87,23 +88,22 @@ void COptimizer::vRunIteration()
 			double fitness = population[i]->updateFitness(*this, i);
 		}
 
-		shuffle(begin(population), end(population), c_rand_engine);
 
 		// Optimize some solutions
+		if (greedy_iteration == GREEDY_OPTIMIZATION) {
+			greedy_iteration = 0;
+			shuffle(begin(population), end(population), c_rand_engine);
 #pragma omp parallel for
-		for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
-			simpleGreedyOptimization(population[i], i);
+			for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
+				simpleGreedyOptimization(population[i], i);
+			}
 		}
 
-		//Clear cache
-		if (cache_livetime == CACHE_MAX_LIVETIME) {
-			cache_livetime = 0;
-			fitnessCache.clear();
+		greedy_iteration++;
+		if (greedy_iteration % 100 == 0) {
+			cout << greedy_iteration << " " << d_current_best_fitness << endl;
 		}
-
-		cout << "END OF ITERATION: " << d_current_best_fitness << endl;
 	}
-	fitnessCache.clear();
 }
 
 

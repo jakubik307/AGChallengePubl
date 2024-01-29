@@ -41,27 +41,15 @@ void Individual::fillRandomly()
 
 double Individual::updateFitness(COptimizer& optimizer, int eval_index) {
 	CLFLnetEvaluator* local_evaluator = optimizer.evaluators[eval_index];
-
-	// Check if the genotype is already in the cache
-	unordered_map<vector<int>, double>::iterator cacheIt = optimizer.fitnessCache.find(genotype);
-	if (cacheIt != optimizer.fitnessCache.end()) {
-		// If found, return the cached fitness value
-		fitness = cacheIt->second;
-	}
-	else {
-		// If not found, calculate the fitness and store in the cache
 		fitness = local_evaluator->dEvaluate(&genotype);
 
 #pragma omp critical 
 		{
-			optimizer.fitnessCache[genotype] = fitness;
 			if (fitness > optimizer.d_current_best_fitness) {
 				optimizer.d_current_best_fitness = fitness;
 				optimizer.v_current_best = genotype;
-				std::cout << optimizer.d_current_best_fitness << std::endl;
 			}
 		}
-	}
 
 	return fitness;
 }
@@ -84,37 +72,45 @@ void Individual::mutate()
 	}
 }
 
-void Individual::crossover(Individual* other_parent, Individual* child1, Individual* child2) {
-
+void Individual::crossover(Individual* other_parent, Individual* child1, Individual* child2)
+{
 	uniform_real_distribution<double> prob_distribution(0.0, 1.0);
 	double crossover_prob = prob_distribution(rand_engine);
 
-	vector<bool> crossover_mask(genotype.size(), false);
+	int crossover_point;
 
 	if (crossover_prob < CROSS_PROB) {
-		uniform_int_distribution<int> mask_length_distribution(1, genotype.size() - 1);
-		int mask_length = mask_length_distribution(rand_engine);
-
-		for (int i = 0; i < mask_length; i++) {
-			crossover_mask[i] = true;
-		}
-
-		shuffle(crossover_mask.begin(), crossover_mask.end(), rand_engine);
+		// Randomly select the crossover point
+		uniform_int_distribution<int> crossover_point_distribution(1, genotype.size() - 1);
+		crossover_point = crossover_point_distribution(rand_engine);
+	}
+	else {
+		crossover_point = 0;
 	}
 
+	// Randomly select the crossover point
+	uniform_int_distribution<int> crossover_point_distribution(1, genotype.size() - 1);
+	crossover_point = crossover_point_distribution(rand_engine);
+
 	child1->genotype.clear();
-	child1->genotype.resize(genotype.size());
+	child1->genotype.resize((size_t)evaluator.iGetNumberOfBits());
 
 	child2->genotype.clear();
-	child2->genotype.resize(genotype.size());
+	child2->genotype.resize((size_t)evaluator.iGetNumberOfBits());
 
 	// Perform crossover for child 1
-	for (int i = 0; i < genotype.size(); i++) {
-		child1->genotype[i] = crossover_mask[i] ? genotype[i] : other_parent->genotype[i];
+	for (int i = 0; i < crossover_point; i++) {
+		child1->genotype[i] = genotype[i];
+	}
+	for (int i = crossover_point; i < genotype.size(); i++) {
+		child1->genotype[i] = other_parent->genotype[i];
 	}
 
 	// Perform crossover for child 2
-	for (int i = 0; i < genotype.size(); i++) {
-		child2->genotype[i] = crossover_mask[i] ? other_parent->genotype[i] : genotype[i];
+	for (int i = 0; i < crossover_point; i++) {
+		child2->genotype[i] = other_parent->genotype[i];
+	}
+	for (int i = crossover_point; i < genotype.size(); i++) {
+		child2->genotype[i] = genotype[i];
 	}
 }
