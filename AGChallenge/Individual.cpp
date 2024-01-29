@@ -73,45 +73,37 @@ void Individual::mutate()
 	}
 }
 
-void Individual::crossover(Individual* other_parent, Individual* child1, Individual* child2)
-{
+void Individual::crossover(Individual* other_parent, Individual* child1, Individual* child2) {
+
 	uniform_real_distribution<double> prob_distribution(0.0, 1.0);
 	double crossover_prob = prob_distribution(rand_engine);
 
-	int crossover_point;
+	vector<bool> crossover_mask(genotype.size(), false);
 
 	if (crossover_prob < CROSS_PROB) {
-		// Randomly select the crossover point
-		uniform_int_distribution<int> crossover_point_distribution(1, genotype.size() - 1);
-		crossover_point = crossover_point_distribution(rand_engine);
-	}
-	else {
-		crossover_point = 0;
-	}
+		uniform_int_distribution<int> mask_length_distribution(1, genotype.size() - 1);
+		int mask_length = mask_length_distribution(rand_engine);
 
-	// Randomly select the crossover point
-	uniform_int_distribution<int> crossover_point_distribution(1, genotype.size() - 1);
-	crossover_point = crossover_point_distribution(rand_engine);
+		for (int i = 0; i < mask_length; i++) {
+			crossover_mask[i] = true;
+		}
+
+		shuffle(crossover_mask.begin(), crossover_mask.end(), rand_engine);
+	}
 
 	child1->genotype.clear();
-	child1->genotype.resize((size_t)evaluator.iGetNumberOfBits());
+	child1->genotype.resize(genotype.size());
 
 	child2->genotype.clear();
-	child2->genotype.resize((size_t)evaluator.iGetNumberOfBits());
+	child2->genotype.resize(genotype.size());
 
 	// Perform crossover for child 1
-	for (int i = 0; i < crossover_point; i++) {
-		child1->genotype[i] = genotype[i];
-	}
-	for (int i = crossover_point; i < genotype.size(); i++) {
-		child1->genotype[i] = other_parent->genotype[i];
+	for (int i = 0; i < genotype.size(); i++) {
+		child1->genotype[i] = crossover_mask[i] ? genotype[i] : other_parent->genotype[i];
 	}
 
 	// Perform crossover for child 2
-	for (int i = 0; i < crossover_point; i++) {
-		child2->genotype[i] = other_parent->genotype[i];
-	}
-	for (int i = crossover_point; i < genotype.size(); i++) {
-		child2->genotype[i] = genotype[i];
+	for (int i = 0; i < genotype.size(); i++) {
+		child2->genotype[i] = crossover_mask[i] ? other_parent->genotype[i] : genotype[i];
 	}
 }
