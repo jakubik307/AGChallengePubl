@@ -51,12 +51,15 @@ double Individual::updateFitness(COptimizer& optimizer, int eval_index) {
 	else {
 		// If not found, calculate the fitness and store in the cache
 		fitness = local_evaluator->dEvaluate(&genotype);
-		optimizer.fitnessCache[genotype] = fitness;
 
-		if (fitness > optimizer.d_current_best_fitness) {
-			optimizer.d_current_best_fitness = fitness;
-			optimizer.v_current_best = genotype;
-			std::cout << optimizer.d_current_best_fitness << std::endl;
+#pragma omp critical 
+		{
+			optimizer.fitnessCache[genotype] = fitness;
+			if (fitness > optimizer.d_current_best_fitness) {
+				optimizer.d_current_best_fitness = fitness;
+				optimizer.v_current_best = genotype;
+				std::cout << optimizer.d_current_best_fitness << std::endl;
+			}
 		}
 	}
 

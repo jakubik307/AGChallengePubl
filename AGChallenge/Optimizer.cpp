@@ -90,6 +90,7 @@ void COptimizer::vRunIteration()
 		shuffle(begin(population), end(population), c_rand_engine);
 
 		// Optimize some solutions
+#pragma omp parallel for
 		for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
 			simpleGreedyOptimization(population[i], i);
 		}
