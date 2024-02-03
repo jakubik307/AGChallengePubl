@@ -12,10 +12,10 @@
 using namespace std;
 
 const int POP_SIZE = 200;
-const double CROSS_PROB = 0.7;
-const double MUT_PROB = 0.0001;
+const double CROSS_PROB = 0.9;
+const double MUT_PROB = 0.001;
 const int GREEDY_INDIVIDUALS = 10;
-const int GREEDY_OPTIMIZATION = 3000;
+const int GREEDY_OPTIMIZATION = 1000;
 
 class Individual
 {
@@ -57,6 +57,8 @@ public:
 private:
 	CLFLnetEvaluator& c_evaluator;
 	mt19937 c_rand_engine;
+
+	int greedy_counter;
 
 	double d_current_best_fitness;
 	vector<int> v_current_best;

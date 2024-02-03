@@ -48,7 +48,6 @@ double Individual::updateFitness(COptimizer& optimizer, int eval_index) {
 			{
 				optimizer.d_current_best_fitness = fitness;
 				optimizer.v_current_best = genotype;
-				cout << optimizer.d_current_best_fitness << endl;
 			}	
 		}
 

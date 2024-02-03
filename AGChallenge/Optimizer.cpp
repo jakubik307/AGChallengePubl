@@ -7,6 +7,7 @@ COptimizer::COptimizer(CLFLnetEvaluator& cEvaluator)
 	c_rand_engine.seed(c_seed_generator());
 
 	d_current_best_fitness = 0;
+	greedy_counter = 0;
 }
 
 COptimizer::~COptimizer()
@@ -34,76 +35,69 @@ void COptimizer::vInitialize()
 }//void COptimizer::vInitialize()
 
 void COptimizer::vRunIteration()
-{
-	int greedy_iteration = 0;
+{	
+	vector<Individual*> new_population;
 
-	while (d_current_best_fitness != 1) {
-		vector<Individual*> new_population;
+	// Perform selection, crossover, mutation, and replacement
+	while (new_population.size() < POP_SIZE)
+	{
+		Individual* parent1 = tournament();
+		Individual* parent2 = tournament();
 
-		// Perform selection, crossover, mutation, and replacement
-		while (new_population.size() < POP_SIZE)
+		while (parent1->genotype == parent2->genotype)
 		{
-			Individual* parent1 = tournament();
-			Individual* parent2 = tournament();
-
-			while (parent1->genotype == parent2->genotype)
-			{
-				delete parent2;
-				parent2 = tournament();
-			}
-
-			// Perform crossover
-			Individual* child1 = new Individual(*parent1);
-			Individual* child2 = new Individual(*parent2);
-			parent1->crossover(parent2, child1, child2);
-
-			delete parent1;
 			delete parent2;
-
-			// Perform mutation on children
-			child1->mutate();
-			child2->mutate();
-
-			// Add children to the new population
-			new_population.push_back(child1);
-			new_population.push_back(child2);
+			parent2 = tournament();
 		}
 
-		// Swap new population with the current one
-		for (int i = 0; i < population.size(); i++) {
-			delete population[i];
-		}
-		population.swap(new_population);
+		// Perform crossover
+		Individual* child1 = new Individual(*parent1);
+		Individual* child2 = new Individual(*parent2);
+		parent1->crossover(parent2, child1, child2);
 
-		// Set size to the constant value
-		while (population.size() > POP_SIZE) {
-			delete population[population.size() - 1];
-			population.pop_back();
-		}
+		delete parent1;
+		delete parent2;
 
-		// Update the current best solution
+		// Perform mutation on children
+		child1->mutate();
+		child2->mutate();
+
+		// Add children to the new population
+		new_population.push_back(child1);
+		new_population.push_back(child2);
+	}
+
+	// Swap new population with the current one
+	for (int i = 0; i < population.size(); i++) {
+		delete population[i];
+	}
+	population.swap(new_population);
+
+	// Set size to the constant value
+	while (population.size() > POP_SIZE) {
+		delete population[population.size() - 1];
+		population.pop_back();
+	}
+
+	// Update the current best solution
 #pragma omp parallel for
-		for (int i = 0; i < population.size(); i++)
-		{
-			double fitness = population[i]->updateFitness(*this, i);
-		}
+	for (int i = 0; i < population.size(); i++)
+	{
+		double fitness = population[i]->updateFitness(*this, i);
+	}
 
 
-		// Optimize some solutions
-		if (greedy_iteration == GREEDY_OPTIMIZATION) {
-			greedy_iteration = 0;
-			shuffle(begin(population), end(population), c_rand_engine);
+	// Optimize some solutions
+	if (greedy_counter == GREEDY_OPTIMIZATION) {
+		greedy_counter = 0;
+		shuffle(begin(population), end(population), c_rand_engine);
 #pragma omp parallel for
-			for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
-				simpleGreedyOptimization(population[i], i);
-			}
-		}
-
-		greedy_iteration++;
-		if (greedy_iteration % 100 == 0) {
-			cout << greedy_iteration << " " << d_current_best_fitness << endl;
+		for (int i = 0; i < GREEDY_INDIVIDUALS; i++) {
+			simpleGreedyOptimization(population[i], i);
 		}
 	}
+
+	greedy_counter++;
 }
 
 
