@@ -10,10 +10,8 @@
 
 using namespace std;
 
-const int ITERATIONS = 10000;
-
-const int POP_SIZE = 100;
-const double CROSS_PROB = 0.6;
+const int POP_SIZE = 299;
+const double CROSS_PROB = 0.9;
 const double MUT_PROB = 0.0001;
 
 class Individual
@@ -26,15 +24,14 @@ public:
 	
 	Individual& operator=(const Individual& other);
 
-	double getFitness();
+	double updateFitness(COptimizer& optimizer, int eval_index);
 	void mutate();
-	void crossover(Individual& other_parent, Individual& child1, Individual& child2);
+	void crossover(Individual* other_parent, Individual* child1, Individual* child2);
 
 private:
-	void fill_randomly();
+	void fillRandomly();
 
 	double fitness;
-	bool update_fitness;
 
 	CLFLnetEvaluator& evaluator;
 	mt19937& rand_engine;
@@ -43,12 +40,14 @@ private:
 
 class COptimizer
 {
+	friend class Individual;
+
 public:
 	COptimizer(CLFLnetEvaluator& cEvaluator);
+	~COptimizer();
 
 	void vInitialize();
 	void vRunIteration();
-	void vRunAlgorithm();
 
 	vector<int>* pvGetCurrentBest() { return &v_current_best; }
 
@@ -59,7 +58,9 @@ private:
 	double d_current_best_fitness;
 	vector<int> v_current_best;
 
-	vector<Individual> population;
+	vector<CLFLnetEvaluator*> evaluators;
 
-	Individual tournament();
+	vector<Individual*> population;
+
+	Individual* tournament();
 };//class COptimizer
