@@ -148,6 +148,8 @@
     <ClCompile Include="fitness.cpp" />
     <ClCompile Include="list.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Mask.cpp" />
+    <ClCompile Include="MaskOptimizer.cpp" />
     <ClCompile Include="MyMath.cpp" />
     <ClCompile Include="NETsimulator.cpp" />
     <ClCompile Include="Optimizer.cpp" />
@@ -158,6 +160,7 @@
   <ItemGroup>
     <ClInclude Include="Evaluator.h" />
     <ClInclude Include="fitness.h" />
+    <ClInclude Include="MaskOptimizer.h" />
     <ClInclude Include="SmartPointer.h" />
     <ClInclude Include="list.h" />
     <ClInclude Include="MyMath.h" />

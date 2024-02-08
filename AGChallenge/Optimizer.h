@@ -10,7 +10,7 @@
 
 using namespace std;
 
-const int POP_SIZE = 299;
+const int POP_SIZE = 200;
 const double CROSS_PROB = 0.9;
 const double MUT_PROB = 0.0001;
 
@@ -41,6 +41,7 @@ private:
 class COptimizer
 {
 	friend class Individual;
+	friend class MaskOptimizer;
 
 public:
 	COptimizer(CLFLnetEvaluator& cEvaluator);
